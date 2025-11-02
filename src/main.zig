@@ -35,12 +35,12 @@ pub fn main() !void {
 
     var char = reader.content[reader.curr];
     if (char != '{') {
-        std.debug.print("1Unexpected character at {d}: {c}\n", .{reader.curr, char});
+        std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
         return;
     }
 
-    if (reader.curr + 1 > file_size - 1) {
-        std.debug.print("2Unexpected character at {d}: {c}\n", .{reader.curr, char});
+    if (reader.curr + 1 > file_size) {
+        std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
         return;
     }
 
@@ -89,39 +89,38 @@ pub fn main() !void {
 
         reader.curr += 1;
         char = reader.content[reader.curr];
-        if (char != '"') {
-            std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
-            return;
-        }
-
-        reader.curr += 1;
-        char = reader.content[reader.curr];
-
-        curr_temp = reader.curr;
-        while (ascii.isAlphabetic(reader.content[reader.curr])) {
+        if (char == '"') {
             reader.curr += 1;
+            char = reader.content[reader.curr];
+
+            curr_temp = reader.curr;
+            while (ascii.isAlphanumeric(reader.content[reader.curr])) {
+                reader.curr += 1;
+            }
+
+            char = reader.content[reader.curr];
+            if (char != '"') {
+                std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
+                return;
+            }
+            reader.curr += 1;
+        } else {
+            while (reader.curr < file_size and ascii.isDigit(reader.content[reader.curr])) {
+                // std.debug.print("I ran mf: {c}\n", .{reader.content[reader.curr]});
+                // std.debug.print("char: {c}\n", .{reader.content[reader.curr]});
+                char = reader.content[reader.curr];
+                reader.curr += 1;
+            }
         }
 
-        char = reader.content[reader.curr];
-        if (char != '"') {
+        if (reader.curr + 1 > file_size) {
             std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
             return;
         }
 
-        if (reader.curr + 1 > file_size - 1) {
-            std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
-            return;
-        }
-
-        reader.curr += 1;
         char = reader.content[reader.curr];
-        if (char == '}') {
+        if (reader.curr + 1 == file_size and char == '}') {
             std.debug.print("json: {s}\n", .{reader.content});
-            return;
-        }
-
-        if (char != ',') {
-            std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
             return;
         }
 
