@@ -4,12 +4,55 @@ const ascii = @import("std").ascii;
 const expect = @import("std").testing.expect;
 
 const Reader = struct {
+    file_size: u64,
     content: []u8,
     curr: u32,
-
     fn trim_space(self: *Reader) void {
         while(ascii.isWhitespace(self.content[self.curr])) {
             self.curr += 1;
+        }
+    }
+
+    fn parse_numeric(self: *Reader) void {
+        while(self.curr < self.file_size and ascii.isDigit(self.content[self.curr])) {
+            self.curr += 1;
+        }
+    }
+
+    fn parse_string(self: *Reader, is_key: bool) void {
+        if (is_key) {
+            while (ascii.isAlphabetic(self.content[self.curr])) {
+                self.curr += 1;
+            }
+        } else {
+            while (ascii.isAlphanumeric(self.content[self.curr])) {
+                self.curr += 1;
+            }
+        }
+    }
+
+    fn parse_key(self: *Reader) void {
+        var char = self.content[self.curr];
+        if (char != '"') {
+            std.debug.print("Unexpected character at {d}: {c}\n", .{self.curr, self.content[self.curr - 1]});
+            return;
+        }
+
+        self.curr += 1;
+        char = self.content[self.curr];
+
+        const curr_temp = self.curr;
+        self.parse_string(true);
+
+        if (curr_temp == self.curr) {
+            std.debug.print("Field name cannot be empty\n", .{});
+            return;
+        }
+
+        char = self.content[self.curr];
+        if (char != '"') {
+            std.debug.print("Unexpected character at {d}: {c}\n", .{self.curr, char});
+            return;
         }
     }
 };
@@ -36,6 +79,7 @@ pub fn main() !void {
     file_size -= 1;
 
     var reader = Reader{
+        .file_size = file_size,
         .content = buffer[0..file_size],
         .curr = 0,
     };
@@ -63,33 +107,11 @@ pub fn main() !void {
     while(repeat) {
         repeat = false;
 
-        char = reader.content[reader.curr];
-        if (char != '"') {
-            std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, reader.content[reader.curr - 1]});
-            return;
-        }
-
-        reader.curr += 1;
-        char = reader.content[reader.curr];
-
-        var curr_temp = reader.curr;
-        while (ascii.isAlphabetic(reader.content[reader.curr])) {
-            reader.curr += 1;
-        }
-
-        if (curr_temp == reader.curr) {
-            std.debug.print("Field name cannot be empty\n", .{});
-            return;
-        }
-
-        char = reader.content[reader.curr];
-        if (char != '"') {
-            std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
-            return;
-        }
+        reader.parse_key();
 
         reader.curr += 1;
         reader.trim_space();
+
         char = reader.content[reader.curr];
         if (char != ':') {
             std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
@@ -103,10 +125,7 @@ pub fn main() !void {
             reader.curr += 1;
             char = reader.content[reader.curr];
 
-            curr_temp = reader.curr;
-            while (ascii.isAlphanumeric(reader.content[reader.curr])) {
-                reader.curr += 1;
-            }
+            reader.parse_string(false);
 
             char = reader.content[reader.curr];
             if (char != '"') {
@@ -115,11 +134,11 @@ pub fn main() !void {
             }
             reader.curr += 1;
         } else {
-            while (reader.curr < file_size and ascii.isDigit(reader.content[reader.curr])) {
-                // std.debug.print("I ran mf: {c}\n", .{reader.content[reader.curr]});
-                // std.debug.print("char: {c}\n", .{reader.content[reader.curr]});
-                char = reader.content[reader.curr];
-                reader.curr += 1;
+            if (char == '[') {
+                // while(reader.curr < file_size and (ascii.))
+
+            } else {
+                reader.parse_numeric();
             }
         }
 
