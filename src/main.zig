@@ -6,7 +6,14 @@ const expect = @import("std").testing.expect;
 const Reader = struct {
     content: []u8,
     curr: u32,
+
+    fn trim_space(self: *Reader) void {
+        while(ascii.isWhitespace(self.content[self.curr])) {
+            self.curr += 1;
+        }
+    }
 };
+
 
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
@@ -45,6 +52,7 @@ pub fn main() !void {
     }
 
     reader.curr += 1;
+    reader.trim_space();
     char = reader.content[reader.curr];
     if (char == '}') {
         std.debug.print("json: {s}\n", .{reader.content});
@@ -81,6 +89,7 @@ pub fn main() !void {
         }
 
         reader.curr += 1;
+        reader.trim_space();
         char = reader.content[reader.curr];
         if (char != ':') {
             std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
@@ -88,6 +97,7 @@ pub fn main() !void {
         }
 
         reader.curr += 1;
+        reader.trim_space();
         char = reader.content[reader.curr];
         if (char == '"') {
             reader.curr += 1;
@@ -113,6 +123,8 @@ pub fn main() !void {
             }
         }
 
+        reader.trim_space();
+
         if (reader.curr + 1 > file_size) {
             std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
             return;
@@ -125,6 +137,7 @@ pub fn main() !void {
         }
 
         reader.curr += 1;
+        reader.trim_space();
         repeat = true;
     }
 }
