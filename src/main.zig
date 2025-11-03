@@ -57,7 +57,7 @@ pub fn main() !void {
 
         char = reader.content[reader.curr];
         if (char != '"') {
-            std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
+            std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, reader.content[reader.curr - 1]});
             return;
         }
 
@@ -100,7 +100,7 @@ pub fn main() !void {
 
             char = reader.content[reader.curr];
             if (char != '"') {
-                std.debug.print("Unexpected character at {d}: {c}\n", .{reader.curr, char});
+                std.debug.print("Missing double quote \" at {d}\n", .{reader.curr});
                 return;
             }
             reader.curr += 1;
