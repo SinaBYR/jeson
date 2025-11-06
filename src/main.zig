@@ -8,8 +8,7 @@ const Reader = struct {
     content: []u8,
     curr: u32,
     fn trim_space(self: *Reader) void {
-        std.debug.print("self.curr: {d}\n", .{self.curr});
-        while(ascii.isWhitespace(self.content[self.curr])) {
+        while(self.curr < self.size and ascii.isWhitespace(self.content[self.curr])) {
             self.curr += 1;
         }
     }
@@ -102,7 +101,7 @@ const Reader = struct {
 
             char = self.content[self.curr];
             if (char != ':') {
-                std.debug.print("Unexpected character at {d}: {c}\n", .{self.curr, char});
+                std.debug.print("Expected colon (:), but found \"{c}\" at {d}.\n", .{char, self.curr});
                 return;
             }
             self.curr += 1;
@@ -112,7 +111,8 @@ const Reader = struct {
             self.trim_space();
 
             if (self.curr + 1 > self.size) {
-                std.debug.print("Unexpected character at {d}: {c}\n", .{self.curr, char});
+                char = self.content[self.curr - 1];
+                std.debug.print("Expected closing curly brace at {d}.\n", .{self.curr});
                 return;
             }
 
@@ -125,7 +125,7 @@ const Reader = struct {
                 self.curr += 1;
                 repeat = true;
             } else {
-                std.debug.print("Unexpected character at {d}: {c}\n", .{self.curr, char});
+                std.debug.print("Expected comma (,), but found \"{c}\" at {d}.\n", .{char, self.curr});
                 return;
             }
         }
@@ -141,8 +141,7 @@ pub fn main() !void {
     const buffer = try allocator.alloc(u8, file_size);
     defer allocator.free(buffer);
 
-    const bytes_read = try file.readAll(buffer);
-    std.debug.print("Read {d} bytes with space removed\n", .{bytes_read - 1});
+    _ = try file.readAll(buffer);
 
     if (file_size == 0) {
         std.debug.print("EMPTY\n", .{});
