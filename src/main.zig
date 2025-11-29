@@ -27,19 +27,23 @@ const Reader = struct {
         }
     }
 
-    fn parse_bool(self: *Reader) void {
+    fn parse_bool(self: *Reader) u8 {
         const false_bool = self.content[self.curr..self.curr + 5];
         const true_bool = self.content[self.curr..self.curr + 4];
         if (std.mem.eql(u8, true_bool, "true")) {
             self.curr += 4;
-        } else {
-            if (std.mem.eql(u8, false_bool, "false")) {
-                self.curr += 5;
-            }
+            return 0;
         }
+
+        if (std.mem.eql(u8, false_bool, "false")) {
+            self.curr += 5;
+            return 0;
+        }
+
+        return 1;
     }
 
-    fn parse_value(self: *Reader) void {
+    fn parse_value(self: *Reader) u8 {
         var char = self.content[self.curr];
         if (char == '"') {
             self.curr += 1;
@@ -52,22 +56,24 @@ const Reader = struct {
             char = self.content[self.curr];
             if (char != '"') {
                 std.debug.print("Missing double quote \" at {d}\n", .{self.curr});
-                return;
+                return 1;
             }
             self.curr += 1;
+            return 0;
         } else {
             if (char == '[') {
                 // while(self.curr < file_size and (ascii.))
-
+                return 0;
             } else {
                 if (char == '{') {
                     // while(self.curr < file_size and (ascii.))
-
+                    return 0;
                 } else {
                     if (ascii.isDigit(self.content[self.curr])) {
                         self.parse_numeric();
+                        return 0;
                     } else {
-                        self.parse_bool();
+                        return self.parse_bool();
                     }
                 }
             }
@@ -127,6 +133,7 @@ const Reader = struct {
 
         var repeat = true;
         while(repeat) {
+            repeat = false;
             self.trim_space();
             self.parse_key();
             self.trim_space();
@@ -139,7 +146,10 @@ const Reader = struct {
             self.curr += 1;
 
             self.trim_space();
-            self.parse_value();
+            const code = self.parse_value();
+            if (code != 0) {
+                return;
+            }
             self.trim_space();
 
             if (self.curr + 1 > self.size) {
@@ -156,10 +166,23 @@ const Reader = struct {
             if (char == ',') {
                 self.curr += 1;
                 repeat = true;
-            } else {
+                continue;
+            }
+            if (char == '}') {
+                self.curr += 1;
+                self.trim_space();
+                char = self.content[self.curr];
+                if (char == ',') {
+                    self.curr += 1;
+                    repeat = true;
+                    continue;
+                }
+
                 std.debug.print("Expected comma (,), but found \"{c}\" at {d}.\n", .{char, self.curr});
                 return;
             }
+
+            std.debug.print("Unexpected character at {d}: {c}\n", .{self.curr, self.content[self.curr]});
         }
     }
 };
