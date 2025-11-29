@@ -13,6 +13,14 @@ const Reader = struct {
         }
     }
 
+    fn trim_space_end(self: *Reader) void {
+        var i = self.size - 1;
+        while(i > 0 and ascii.isWhitespace(self.content[i])) {
+            i -= 1;
+            self.size -= 1;
+        }
+    }
+
     fn parse_numeric(self: *Reader) void {
         while(self.curr < self.size and ascii.isDigit(self.content[self.curr])) {
             self.curr += 1;
@@ -74,6 +82,9 @@ const Reader = struct {
     }
 
     fn parse(self: *Reader) void {
+        // remove spaces from the end, reducing end spaces from self.size value
+        self.trim_space_end();
+
         var char = self.content[self.curr];
         if (char != '{') {
             std.debug.print("Unexpected character at {d}: {c}\n", .{self.curr, char});
