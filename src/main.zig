@@ -27,6 +27,18 @@ const Reader = struct {
         }
     }
 
+    fn parse_bool(self: *Reader) void {
+        const false_bool = self.content[self.curr..self.curr + 5];
+        const true_bool = self.content[self.curr..self.curr + 4];
+        if (std.mem.eql(u8, true_bool, "true")) {
+            self.curr += 4;
+        } else {
+            if (std.mem.eql(u8, false_bool, "false")) {
+                self.curr += 5;
+            }
+        }
+    }
+
     fn parse_value(self: *Reader) void {
         var char = self.content[self.curr];
         if (char == '"') {
@@ -48,7 +60,16 @@ const Reader = struct {
                 // while(self.curr < file_size and (ascii.))
 
             } else {
-                self.parse_numeric();
+                if (char == '{') {
+                    // while(self.curr < file_size and (ascii.))
+
+                } else {
+                    if (ascii.isDigit(self.content[self.curr])) {
+                        self.parse_numeric();
+                    } else {
+                        self.parse_bool();
+                    }
+                }
             }
         }
     }
